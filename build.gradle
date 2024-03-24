@@ -1,0 +1,62 @@
+plugins {
+    id "java"
+    id "application"
+}
+
+application.getMainClass().set("game.Launcher")
+
+group "sparkle"
+version "1.0-SNAPSHOT"
+
+compileJava {
+    sourceCompatibility = "21"
+    targetCompatibility = "21"
+}
+
+repositories {
+    mavenCentral()
+}
+
+import org.gradle.internal.os.OperatingSystem
+
+def lwjglVersion = "3.3.3"
+def lwjglNatives = ""
+
+switch (OperatingSystem.current()) {
+    case OperatingSystem.LINUX:
+        def osArch = System.getProperty("os.arch")
+        lwjglNatives = osArch.startsWith("arm") || osArch.startsWith("aarch64") ? "natives-linux-${osArch.contains("64") || osArch.startsWith("armv8") ? "arm64" : "arm32"}" : "natives-linux"
+        break
+    case OperatingSystem.MAC_OS:
+        lwjglNatives = System.getProperty("os.arch").startsWith("aarch64") ? "natives-macos-arm64" : "natives-macos"
+        break
+    case OperatingSystem.WINDOWS:
+        def osArch = System.getProperty("os.arch")
+        lwjglNatives = osArch.contains("64") ? "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}" : "natives-windows-x86"
+        break
+}
+
+dependencies {
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-glfw"
+    implementation "org.lwjgl:lwjgl-openal"
+    implementation "org.lwjgl:lwjgl-stb"
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes "Main-Class": application.getMainClass()
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
