@@ -69,7 +69,9 @@ public final class Audio {
         Audio.globalVolume = newVolume;
         for (var object : globalClips.toArray()) {
             var clip = (Clip) object;
-            clip.setVolume(clip.volume);
+            if (clip != null) {
+                clip.setVolume(clip.volume);
+            }
         }
     }
 
